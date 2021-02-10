@@ -30,18 +30,9 @@ char *syssigname[]={
 char*
 Rcmain(void)
 {
-	char *s;
-	static char buf[BUFSIZ];
-	static int isset = 0 ;
-	if(isset)
-		return buf ;
-
-	s = getapproot() ;
-	strncpy(buf, s, sizeof(buf)-1);
-	strncat(buf, "/" NAME "/rcmain", sizeof(buf)-1);
-
-	isset = 1 ;
-	return buf ; 
+	static char *s = 0 ;
+	if(!s) unsharp("#u/app/" NAME "/rcmain") ;
+	return s ; 
 }
 
 char Fdprefix[]="/dev/fd/";
