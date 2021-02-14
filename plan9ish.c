@@ -31,7 +31,7 @@ char*
 Rcmain(void)
 {
 	static char *s = 0 ;
-	if(!s) unsharp("#u/app/" NAME "/rcmain") ;
+	if(!s) s = unsharp("#u/app/" NAME "/rcmain") ;
 	return s ; 
 }
 

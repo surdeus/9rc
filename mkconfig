@@ -1,4 +1,4 @@
-<$HOME/app/mk/inc/config
+<$MKINCDIR/config
 PROGNAME = 9rc
 SCRIPT = rc
 INCS = $DOTINC $INC9
