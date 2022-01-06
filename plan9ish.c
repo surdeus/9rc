@@ -11,31 +11,11 @@
 #include "getflags.h"
 
 #define BUFSIZ 512
-char *Signame[]={
-	"sigexit",	"sighup",	"sigint",	"sigquit",
-	"sigalrm",	"sigkill",	"sigfpe",	"sigterm",
-	0
-};
-char *syssigname[]={
-	"exit",		/* can't happen */
-	"hangup",
-	"interrupt",
-	"quit",		/* can't happen */
-	"alarm",
-	"kill",
-	"sys: fp: ",
-	"term",
-	0
-};
-char*
-Rcmain(void)
-{
-	static char *s = 0 ;
-	if(!s) s = unsharp("#u/app/" NAME "/rcmain") ;
-	return s ; 
-}
+#define	SEP	'\1'
+#define	NFD	50
+#define	NDBUF	32
+#define	NDIR	256		/* shoud be a better way */
 
-char Fdprefix[]="/dev/fd/";
 long readnb(int, char *, long);
 void execfinit(void);
 void execbind(void);
@@ -43,6 +23,7 @@ void execmount(void);
 void execulimit(void);
 void execumask(void);
 void execrfork(void);
+
 builtin Builtin[]={
 	"cd",		execcd,
 	"whatis",	execwhatis,
@@ -59,6 +40,47 @@ builtin Builtin[]={
 	"rfork",	execrfork,
 	0
 };
+
+struct{
+	Dir	*dbuf;
+	int	i;
+	int	n;
+} dir[NFD] ;
+
+union code rdfns[4];
+
+char *Signame[]={
+	"sigexit",	"sighup",	"sigint",	"sigquit",
+	"sigalrm",	"sigkill",	"sigfpe",	"sigterm",
+	0
+};
+
+char *syssigname[]={
+	"exit",		/* can't happen */
+	"hangup",
+	"interrupt",
+	"quit",		/* can't happen */
+	"alarm",
+	"kill",
+	"sys: fp: ",
+	"term",
+	0
+};
+
+char Fdprefix[]="/dev/fd/";
+char **envp;
+char **environp;
+int interrupted = 0;
+int *waitpids;
+int nwaitpids;
+
+char*
+Rcmain(void)
+{
+	static char *s = 0 ;
+	if(!s) s = unsharp("#u/app/" NAME "/rcmain") ;
+	return s ; 
+}
 
 void
 execrfork(void)
@@ -110,10 +132,8 @@ execrfork(void)
 
 
 
-#define	SEP	'\1'
-char **environp;
-struct word *enval(s)
-register char *s;
+struct word *
+enval(char *s)
 {
 	register char *t, c;
 	register struct word *v;
@@ -124,7 +144,10 @@ register char *s;
 	*t=c;
 	return v;
 }
-void Vinit(void){
+
+void
+Vinit(void)
+{
 	extern char **environ;
 	register char *s;
 	register char **env=environ;
@@ -145,8 +168,11 @@ void Vinit(void){
 		}
 	}
 }
-char **envp;
-void Xrdfn(void){
+
+
+void
+Xrdfn(void)
+{
 	char *p;
 	register char *s;
 	register int len;
@@ -184,8 +210,10 @@ void Xrdfn(void){
 	}
 	Xreturn();
 }
-union code rdfns[4];
-void execfinit(void){
+
+void
+execfinit(void)
+{
 	static int first=1;
 	if(first){
 		rdfns[0].i=1;
@@ -199,7 +227,10 @@ void execfinit(void){
 	start(rdfns, 1, runq->local);
 }
 extern int mapfd(int);
-int Waitfor(int pid, int unused0){
+
+int
+Waitfor(int pid, int unused0)
+{
 	thread *p;
 	Waitmsg *w;
 	char errbuf[ERRMAX];
@@ -229,7 +260,9 @@ int Waitfor(int pid, int unused0){
 	if(strcmp(errbuf, "interrupted")==0) return -1;
 	return 0;
 }
-char **mkargv(word *a)
+
+char **
+mkargv(word *a)
 {
 	char **argv=(char **)emalloc((count(a)+2)*sizeof(char *));
 	char **argp=argv+1;	/* leave one at front for runcoms */
@@ -237,8 +270,10 @@ char **mkargv(word *a)
 	*argp=0;
 	return argv;
 }
+
 /*
-void addenv(var *v)
+void
+addenv(var *v)
 {
 	char envname[256];
 	word *w;
@@ -277,7 +312,9 @@ void updenvlocal(var *v)
 		addenv(v);
 	}
 }
-void Updenv(void){
+void
+Updenv(void)
+{
 	var *v, **h;
 	for(h=gvar;h!=&gvar[NVAR];h++)
 		for(v=*h;v;v=v->next)
@@ -285,12 +322,16 @@ void Updenv(void){
 	if(runq) updenvlocal(runq->local);
 }
 */
+
 int
 cmpenv(const void *a, const void *b)
 {
 	return strcmp(*(char**)a, *(char**)b);
 }
-char **mkenv(){
+
+char **
+mkenv()
+{
 	register char **env, **ep, *p, *q;
 	register struct var **h, *v;
 	register struct word *a;
@@ -350,8 +391,14 @@ char **mkenv(){
 	qsort((char *)env, nvar, sizeof ep[0], cmpenv);
 	return env;	
 }
-void Updenv(void){}
-void Execute(word *args, word *path)
+
+void
+Updenv(void)
+{
+}
+
+void
+Execute(word *args, word *path)
 {
 	char **argv=mkargv(args);
 	char **env=mkenv();
@@ -377,8 +424,9 @@ void Execute(word *args, word *path)
 	pfmt(err, "%s: %s\n", argv[1], file);
 	efree((char *)argv);
 }
-#define	NDIR	256		/* shoud be a better way */
-int Globsize(char *p)
+
+int
+Globsize(char *p)
 {
 	ulong isglob=0, globlen=NDIR+1;
 	for(;*p;p++){
@@ -392,14 +440,9 @@ int Globsize(char *p)
 	}
 	return isglob?globlen:0;
 }
-#define	NFD	50
-#define	NDBUF	32
-struct{
-	Dir	*dbuf;
-	int	i;
-	int	n;
-}dir[NFD];
-int Opendir(char *name)
+
+int
+Opendir(char *name)
 {
 	Dir *db;
 	int f;
@@ -419,7 +462,9 @@ int Opendir(char *name)
 	close(f);
 	return -1;
 }
-int Readdir(int f, char *p, int onlydirs)
+
+int
+Readdir(int f, char *p, int onlydirs)
 {
 	int n;
 	USED(onlydirs);	/* only advisory */
@@ -442,7 +487,10 @@ int Readdir(int f, char *p, int onlydirs)
 	dir[f].i++;
 	return 1;
 }
-void Closedir(int f){
+
+void
+Closedir(int f)
+{
 	if(f>=0 && f<NFD){
 		free(dir[f].dbuf);
 		dir[f].i=0;
@@ -451,7 +499,7 @@ void Closedir(int f){
 	}
 	close(f);
 }
-int interrupted = 0;
+
 void
 notifyf(void *unused0, char *s)
 {
@@ -484,18 +532,27 @@ Out:
 	}
 	noted(NCONT);
 }
-void Trapinit(void){
+
+void
+Trapinit(void)
+{
 	notify(notifyf);
 }
-void Unlink(char *name)
+
+void
+Unlink(char *name)
 {
 	remove(name);
 }
-long Write(int fd, char *buf, long cnt)
+
+long
+Write(int fd, char *buf, long cnt)
 {
 	return write(fd, buf, (long)cnt);
 }
-long Read(int fd, char *buf, long cnt)
+
+long
+Read(int fd, char *buf, long cnt)
 {
 	int i;
 
@@ -503,11 +560,15 @@ long Read(int fd, char *buf, long cnt)
 	if(ntrap) dotrap();
 	return i;
 }
-long Seek(int fd, long cnt, long whence)
+
+long
+Seek(int fd, long cnt, long whence)
 {
 	return seek(fd, cnt, whence);
 }
-int Executable(char *file)
+
+int
+Executable(char *file)
 {
 	Dir *statbuf;
 	int ret;
@@ -518,33 +579,50 @@ int Executable(char *file)
 	free(statbuf);
 	return ret;
 }
-int Creat(char *file)
+
+int
+Creat(char *file)
 {
 	return create(file, 1, 0666L);
 }
-int Dup(int a, int b){
+
+int
+Dup(int a, int b)
+{
 	return dup(a, b);
 }
-int Dup1(int a){
+
+int
+Dup1(int a)
+{
 	return dup(a, -1);
 }
-void Exit(char *stat)
+
+void
+Exit(char *stat)
 {
 	Updenv();
 	setstatus(stat);
 	exits(truestatus()?"":getstatus());
 }
-int Eintr(void){
+
+int
+Eintr(void){
 	return interrupted;
 }
-void Noerror(void){
+
+void
+Noerror(void){
 	interrupted=0;
 }
+
 int
 Isatty(int fd){
 	return isatty(fd);
 }
-void Abort(void){
+
+void Abort(void)
+{
 	pfmt(err, "aborting\n");
 	flush(err);
 	Exit("aborting");
@@ -553,7 +631,9 @@ void Memcpy(char *a, char *b, long n)
 {
 	memmove(a, b, (long)n);
 }
-void *Malloc(ulong n){
+void
+*Malloc(ulong n)
+{
 	return malloc(n);
 }
 
@@ -567,9 +647,6 @@ exitcode(char *msg)
 		n = 1;
 	return n;
 }
-
-int *waitpids;
-int nwaitpids;
 
 void
 addwaitpid(int pid)
