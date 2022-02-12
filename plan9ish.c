@@ -3,7 +3,7 @@
  *	By convention, exported routines herein have names beginning with an
  *	upper case letter.
  */
-#include <u.h>
+#include <9/u.h>
 #include "rc.h"
 #include "exec.h"
 #include "io.h"

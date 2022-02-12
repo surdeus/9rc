@@ -24,6 +24,7 @@ if(! ~ $#cflag 0){
 }
 # Interactive run.
 SHLVL=`{echo $SHLVL + 1 | bc}
+SHELL=rc
 if(flag i){
 	if(flag l && test -r $home/lib/profile) . $home/lib/profile
 	status=''

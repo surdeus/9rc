@@ -1,10 +1,10 @@
-#include <u.h>
+#include <9/u.h>
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/resource.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <libc.h>
+#include <9/c.h>
 #include "rc.h"
 #include "exec.h"
 #include "io.h"

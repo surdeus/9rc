@@ -7,8 +7,8 @@
  */
 #define	Plan9
 #ifdef	Plan9
-#include <u.h>
-#include <libc.h>
+#include <9/u.h>
+#include <9/c.h>
 #undef NSIG
 #undef SIGINT
 #undef SIGQUIT

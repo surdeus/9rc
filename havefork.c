@@ -1,4 +1,4 @@
-#include <u.h>
+#include <9/u.h>
 #include <signal.h>
 #include "rc.h"
 #include "getflags.h"
