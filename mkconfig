@@ -1,3 +1,5 @@
+MKSHELL = sh
+MKINCDIR = $(MKINCDIR)
 <$MKINCDIR/config
 PROGNAME = 9rc
 SCRIPT = rc
@@ -8,7 +10,7 @@ CFLAGS = $CPPFLAGS
 LDFLAGS = $LD_STATIC_FLAG
 MKSHELL = sh
 YFILES = syn.y
-HFILES = `{ls *.h}
+HFILES = `ls *.h`
 YHFILES = y.tab.h
 YCFILES = y.tab.c
 CFILES = code.c exec.c getflags.c glob.c here.c io.c lex.c \
